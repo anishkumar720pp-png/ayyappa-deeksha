@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Swamiye Saranam Ayyappa — 41-Day Deeksha & Parayana Guide</title>
+  <meta name="theme-color" content="#120c08" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Telugu:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            temple: {
+              950: '#0b0704',
+              900: '#140d08',
+              800: '#1f140c',
+              700: '#2d1e12',
+              gold: '#ffb703',
+              saffron: '#f4601e',
+              sandal: '#fbf6ec',
+              parchment: '#f1e5d1',
+              ink: '#3a1d0d'
+            }
+          },
+          fontFamily: {
+            display: ['Cinzel', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans Telugu"', '"Noto Sans Devanagari"', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="bg-temple-950 text-amber-50 font-sans antialiased min-h-screen selection:bg-temple-saffron selection:text-white">
+  <!-- Decorative Top Temple Gold Bar -->
+  <div class="h-1 w-full bg-gradient-to-r from-temple-saffron via-temple-gold to-temple-saffron"></div>
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-50 bg-temple-900/95 backdrop-blur-md border-b border-amber-500/20 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-temple-saffron to-temple-gold text-temple-950 font-display font-extrabold text-xl grid place-items-center shadow-lg shadow-amber-500/25 ring-2 ring-amber-300/40">
+          ॐ
+        </div>
+        <div>
+          <h1 id="ui-app-title" class="font-display text-lg sm:text-xl font-bold text-temple-gold tracking-wide">
+            Swamiye Saranam Ayyappa
+          </h1>
+          <p id="ui-app-subtitle" class="text-xs text-amber-200/75">
+            41-Day Mandala Deeksha & Anantha Leelamruthamu
+          </p>
+        </div>
+      </div>
+
+      <!-- Language Switcher -->
+      <div class="inline-flex bg-temple-800 p-1 rounded-full border border-amber-500/30 shadow-inner" role="group" aria-label="Language Switcher">
+        <button class="lang-btn active px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold transition" data-lang="en">English</button>
+        <button class="lang-btn px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold transition" data-lang="te">తెలుగు</button>
+        <button class="lang-btn px-3.5 py-1 rounded-full text-xs sm:text-sm font-semibold transition" data-lang="hi">हिन्दी</button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-7xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto no-scrollbar" aria-label="Primary Sections">
+      <button class="nav-tab active" data-tab="guru" id="nav-guru">🙏 Ask Guru Swami</button>
+      <button class="nav-tab" data-tab="stories" id="nav-stories">📖 41-Day Parayana</button>
+      <button class="nav-tab" data-tab="irumudi" id="nav-irumudi">🎒 Irumudi Guide</button>
+      <button class="nav-tab" data-tab="tracker" id="nav-tracker">📅 Mandala & Pooja</button>
+      <button class="nav-tab" data-tab="japa" id="nav-japa">📿 108 Saranam</button>
+      <button class="nav-tab" data-tab="selfie" id="nav-selfie">📸 41-Day Album</button>
+      <button class="nav-tab" data-tab="yatra" id="nav-yatra">⛰️ Yatra & Bhajans</button>
+    </nav>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pt-6 pb-16">
+    <!-- TAB 1: ASK GURU SWAMI -->
+    <section id="tab-guru" class="tab-panel active">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Left Guru Swami Sage Card -->
+        <aside class="lg:col-span-4 lg:sticky lg:top-32 bg-gradient-to-b from-temple-800 via-temple-900 to-temple-950 border border-amber-500/30 rounded-2xl p-6 text-center shadow-2xl relative overflow-hidden">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,183,3,0.14),transparent_65%)] pointer-events-none"></div>
+          <div class="relative z-10">
+            <div id="guru-avatar-container" class="w-40 h-40 sm:w-48 sm:h-48 mx-auto mb-3 rounded-full bg-gradient-to-b from-amber-100 to-amber-200/90 p-2 border-4 border-temple-gold shadow-[0_0_28px_rgba(255,183,3,0.3)] overflow-hidden flex items-center justify-center">
+              <svg class="w-full h-full" viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Guru Swami Sage">
+                <defs>
+                  <radialGradient id="aura" cx="50%" cy="45%" r="50%">
+                    <stop offset="0%" stop-color="#ffb703" stop-opacity="0.55"/>
+                    <stop offset="70%" stop-color="#fb8500" stop-opacity="0.16"/>
+                    <stop offset="100%" stop-color="#120c08" stop-opacity="0"/>
+                  </radialGradient>
+                  <linearGradient id="robe" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#ea580c"/>
+                    <stop offset="100%" stop-color="#7c2d12"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="110" cy="105" r="98" fill="url(#aura)"/>
+                <circle cx="110" cy="82" r="54" fill="none" stroke="#ffb703" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.8"/>
+                <path d="M42 195 C45 148, 75 135, 110 135 C145 135, 175 148, 178 195 Z" fill="url(#robe)"/>
+                <path d="M72 138 Q110 175 148 138" fill="none" stroke="#ffb703" stroke-width="2.5" opacity="0.85"/>
+                <path d="M84 134 Q110 172 136 134" fill="none" stroke="#5c2c16" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 5"/>
+                <circle cx="110" cy="155" r="4.5" fill="#d4a373" stroke="#3d1c0a" stroke-width="1.5"/>
+                <rect x="98" y="114" width="24" height="24" rx="8" fill="#d99b66"/>
+                <ellipse cx="110" cy="84" rx="30" ry="36" fill="#e0a470"/>
+                <circle cx="110" cy="42" r="16" fill="#2b2623"/>
+                <path d="M80 76 C80 48, 140 48, 140 76 C132 58, 88 58, 80 76 Z" fill="#2b2623"/>
+                <circle cx="110" cy="36" r="11" fill="#3a332f"/>
+                <line x1="95" y1="67" x2="125" y2="67" stroke="#f8f9fa" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="94" y1="72" x2="126" y2="72" stroke="#f8f9fa" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="96" y1="77" x2="124" y2="77" stroke="#f8f9fa" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="110" cy="72" r="3" fill="#e63946"/>
+                <circle cx="110" cy="72" r="1.3" fill="#ffb703"/>
+                <path d="M93 85 Q99 81 104 85" fill="none" stroke="#2b1d12" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M116 85 Q121 81 127 85" fill="none" stroke="#2b1d12" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M103 102 Q110 107 117 102" fill="none" stroke="#6b341a" stroke-width="2" stroke-linecap="round"/>
+                <path d="M82 94 C82 126, 102 142, 110 144 C118 142, 138 126, 138 94 C132 108, 120 112, 110 112 C100 112, 88 108, 82 94 Z" fill="#f1f3f5"/>
+                <path d="M96 98 Q110 93 124 98" fill="none" stroke="#dee2e6" stroke-width="3" stroke-linecap="round"/>
+                <g transform="translate(142, 146)">
+                  <rect x="4" y="10" width="22" height="26" rx="10" fill="#e0a470"/>
+                  <rect x="5" y="0" width="4" height="14" rx="2" fill="#e0a470"/>
+                  <rect x="10" y="-2" width="4" height="16" rx="2" fill="#e0a470"/>
+                  <rect x="15" y="-1" width="4" height="15" rx="2" fill="#e0a470"/>
+                  <rect x="20" y="2" width="4" height="13" rx="2" fill="#e0a470"/>
+                  <circle cx="15" cy="21" r="3" fill="#e63946" opacity="0.85"/>
+                </g>
+              </svg>
+            </div>
+            <h2 id="ui-guru-name" class="font-display text-xl font-bold text-temple-gold">Sri Guru Swami</h2>
+            <span id="ui-guru-role" class="inline-block mt-1 mb-3 px-3 py-0.5 rounded-full text-xs font-semibold bg-temple-saffron/20 text-amber-300 border border-temple-saffron/40">
+              Mandala Deeksha Margadarshi
+            </span>
+            <p id="ui-guru-blessing" class="text-sm text-amber-100/80 italic leading-relaxed">
+              “Swamiye Saranam Ayyappa! Ask any doubt about the 41-day vratam, rules, significance, or Irumudi.”
+            </p>
+          </div>
+        </aside>
+
+        <!-- Right Interactive Dialogue & Visual Cards -->
+        <div class="lg:col-span-8 space-y-5">
+          <!-- Ask Question Bar -->
+          <form id="guru-ask-form" class="flex gap-2 bg-temple-800/90 p-2 rounded-2xl border border-amber-500/35 shadow-lg focus-within:border-temple-gold transition">
+            <input
+              type="text"
+              id="guru-search-input"
+              class="flex-1 bg-transparent border-none text-amber-50 placeholder-amber-200/45 px-3 py-2 text-sm sm:text-base focus:outline-none"
+              placeholder="Ask anything (e.g., what should we not eat, 41 days, coffee, footwear, irumudi)..."
+            />
+            <button type="submit" id="guru-ask-btn" class="bg-gradient-to-r from-temple-saffron to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer">
+              Ask
+            </button>
+          </form>
+
+          <!-- Category Filter Chips -->
+          <div class="flex flex-wrap gap-2" id="guru-category-chips"></div>
+
+          <!-- Live Guru Swami Answer Stage -->
+          <article id="guru-answer-box" aria-live="polite" class="bg-gradient-to-br from-temple-800 to-temple-900 border-2 border-temple-gold/70 rounded-2xl p-5 sm:p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-amber-500/20">
+              <span class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-temple-gold">
+                <span class="w-2 h-2 rounded-full bg-temple-saffron animate-pulse"></span>
+                🙏 Guru Swami's Guidance
+              </span>
+              <div class="flex items-center gap-2">
+  <button id="listen-answer-btn" type="button" class="text-xs bg-temple-700 hover:bg-temple-600 text-amber-100 px-3 py-1 rounded-lg border border-amber-500/25 transition cursor-pointer">
+    🔊 Listen
+  </button>
+  <button id="stop-answer-btn" type="button" class="hidden text-xs bg-red-900/70 hover:bg-red-800 text-amber-100 px-3 py-1 rounded-lg border border-red-400/30 transition cursor-pointer">
+    ⏹️ Stop
+  </button>
+  <button id="share-answer-btn" type="button" class="text-xs bg-temple-700 hover:bg-temple-600 text-amber-100 px-3 py-1 rounded-lg border border-amber-500/25 transition cursor-pointer">
+    📤 Share
+  </button>
+</div>
+            </div>
+            <h3 id="guru-answer-q" class="text-lg sm:text-xl font-bold text-white mb-3"></h3>
+            <div id="guru-answer-a" class="text-amber-50/95 text-sm sm:text-base leading-relaxed whitespace-pre-line"></div>
+          </article>
+
+          <!-- Sandalwood Parchment Visual Explainer Cards Carousel -->
+          <div class="bg-temple-900/80 border border-amber-500/25 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <span id="ui-cards-title" class="text-xs font-bold uppercase tracking-wider text-temple-gold">📜 Sacred Visual Explainer Cards</span>
+              <div class="flex items-center gap-2">
+                <button id="pcard-prev" type="button" class="w-8 h-8 rounded-lg bg-temple-800 hover:bg-temple-700 border border-amber-500/30 text-temple-gold font-bold cursor-pointer" aria-label="Previous Card">‹</button>
+                <span id="pcard-counter" class="text-xs font-bold text-amber-200">1 / 4</span>
+                <button id="pcard-next" type="button" class="w-8 h-8 rounded-lg bg-temple-800 hover:bg-temple-700 border border-amber-500/30 text-temple-gold font-bold cursor-pointer" aria-label="Next Card">›</button>
+              </div>
+            </div>
+            <div id="parchment-card-stage" class="parchment-card"></div>
+          </div>
+
+          <!-- Suggested Questions Grid -->
+          <div>
+            <h4 id="ui-suggested-title" class="text-sm font-semibold text-amber-200/80 mb-3">
+              Sacred Questions — Tap to Ask Guru Swami:
+            </h4>
+            <div id="guru-questions-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: 41-DAY PARAYANA STORIES -->
+    <section id="tab-stories" class="tab-panel">
+      <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+        <div>
+          <h2 id="ui-stories-title" class="font-display text-xl sm:text-2xl font-bold text-temple-gold">Amrutharoopudu Ayyappa — Anantha Leelamruthamu</h2>
+          <p id="ui-stories-sub" class="text-sm text-amber-200/75">Daily Nitya Parayana Grantham (34 Sacred Chapters + 7 Mandala Contemplation Days)</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="jump-today-story" class="btn-outline">📍 Jump to My Deeksha Day</button>
+          <select id="story-day-select" aria-label="Select Parayana Day"></select>
+        </div>
+      </div>
+
+      <div class="day-strip" id="story-day-strip"></div>
+
+      <article class="bg-temple-900 border border-amber-500/30 rounded-2xl p-5 sm:p-7 shadow-xl">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <span id="story-day-badge" class="badge-gold">Day 1 Parayana</span>
+          <div class="flex items-center gap-2">
+            <button id="story-font-dec" class="btn-icon" title="Decrease font">A-</button>
+            <button id="story-font-inc" class="btn-icon" title="Increase font">A+</button>
+            <button id="story-mark-read" class="btn-outline-sm">✓ Mark Read</button>
+            <button id="story-share-btn" class="btn-ghost-sm">📤 Share</button>
+            <button id="narrator-play-btn" type="button" class="btn-primary text-xs py-1.5 px-3">🔊 Listen</button>
+<button id="narrator-stop-btn" type="button" class="btn-ghost-sm hidden">⏹️ Stop</button>
+<select id="narrator-voice-select" aria-label="Select Narrator Voice" class="text-xs py-1 px-2 max-w-[170px]"></select>
+<select id="narrator-rate-select" aria-label="Narration Speed" class="text-xs py-1 px-2">
+  <option value="0.82">🐢 Calm (0.8x)</option>
+  <option value="0.95" selected>🙏 Normal (1x)</option>
+  <option value="1.15">⚡ Brisk (1.15x)</option>
+</select>
+          </div>
+        </div>
+        <h3 id="story-title" class="font-display text-lg sm:text-2xl font-bold text-temple-gold pb-3 mb-4 border-b border-amber-500/20"></h3>
+        <div id="story-content" class="story-text"></div>
+
+        <div class="mt-6 pt-4 border-t border-amber-500/20 flex flex-wrap justify-between gap-3">
+          <button id="story-prev-btn" class="btn-outline">← Previous Day</button>
+          <button id="ask-guru-story-btn" class="btn-primary">🙏 Ask Guru Swami About This Story</button>
+          <button id="story-next-btn" class="btn-outline">Next Day →</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- TAB 3: IRUMUDI PACKING GUIDE -->
+    <section id="tab-irumudi" class="tab-panel">
+      <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+        <div>
+          <h2 id="ui-irumudi-title" class="font-display text-xl sm:text-2xl font-bold text-temple-gold">Sacred Irumudi Kettu — Visual Packing Guide</h2>
+          <p id="ui-irumudi-sub" class="text-sm text-amber-200/75">Tap each item to mark packed. Structured for Phase 2 3D Pick-and-Drop Packing.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="irumudi-progress-text" class="badge-gold">0 / 14 Packed</span>
+          <button id="irumudi-reset-btn" class="btn-ghost-sm">Reset</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div class="section-banner munmudi-banner">
+            <h3>🥥 Munmudi (Front Compartment — Offerings for Lord Ayyappa)</h3>
+            <p>Contains the sacred Neyyi Thenga (ghee-filled coconut) and pooja items offered at Sannidhanam.</p>
+          </div>
+          <div id="munmudi-grid" class="irumudi-grid"></div>
+        </div>
+
+        <div>
+          <div class="section-banner pinmudi-banner">
+            <h3>🍚 Pinmudi (Back Compartment — Sustenance for the Journey)</h3>
+            <p>Contains raw rice, coconuts, and provisions used during the pilgrimage.</p>
+          </div>
+          <div id="pinmudi-grid" class="irumudi-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: MANDALA TRACKER & DAILY POOJA -->
+    <section id="tab-tracker" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card-box">
+          <h2 id="ui-calc-title">📅 41-Day Mandala Deeksha Calculator</h2>
+          <p id="ui-calc-sub">Set your Mala Dharana (Start) date to track your 41-day Mandala progress automatically.</p>
+          <div class="form-row">
+            <label for="deeksha-start-date" id="ui-start-label">Mala Dharana Date:</label>
+            <input type="date" id="deeksha-start-date" />
+          </div>
+          <div class="form-row checkbox-row">
+            <input type="checkbox" id="kanni-swami-toggle" />
+            <label for="kanni-swami-toggle" id="ui-kanni-label">I am a Kanni Swami (1st Year Devotee)</label>
+          </div>
+          <div id="mandala-summary" class="mandala-summary-box"></div>
+          <div id="kanni-tips-box" class="kanni-box hidden"></div>
+        </div>
+
+        <div class="card-box">
+          <h2 id="ui-pooja-title">🪔 Daily Nitya Pooja & Vratam Checklist</h2>
+          <p id="ui-pooja-sub">Check off today's sacred observances (resets automatically each morning).</p>
+          <div id="daily-checklist" class="checklist-items"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: 108 SARANAM JAPAM COUNTER -->
+    <section id="tab-japa" class="tab-panel">
+      <div class="japa-container">
+        <h2 id="ui-japa-title" class="font-display text-2xl font-bold text-temple-gold">📿 108 Saranam Ayyappa Japam</h2>
+        <p id="ui-japa-sub">Tap the sacred Rudraksha bead for each Saranam mantra.</p>
+
+        <div class="japa-display-card shadow-2xl">
+          <div class="japa-count-ring">
+            <span id="japa-count-num">0</span>
+            <span class="japa-total">/ 108</span>
+          </div>
+          <p id="japa-mantra-text" class="japa-mantra">Swamiye Saranam Ayyappa</p>
+          <button id="japa-tap-btn" class="rudraksha-btn" aria-label="Chant Next Saranam">
+            <span class="bead-icon">🟤</span>
+            <span id="ui-tap-chant">Tap to Chant</span>
+          </button>
+          <div class="japa-controls">
+            <button id="japa-reset-btn" class="btn-ghost-sm">Reset Mala</button>
+            <span id="japa-malas-completed" class="badge-gold">Malas Completed: 0</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: 41-DAY DEEKSHA SELFIE ALBUM -->
+    <section id="tab-selfie" class="tab-panel">
+      <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+        <div>
+          <h2 id="ui-selfie-title" class="font-display text-xl sm:text-2xl font-bold text-temple-gold">📸 41-Day Deeksha Smruti Album</h2>
+          <p id="ui-selfie-sub" class="text-sm text-amber-200/75">Capture your daily sacred look after morning bath & tilak. Stored 100% privately on your device.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <label class="btn-primary file-btn">
+            📷 <span id="ui-take-selfie">Capture / Upload Photo</span>
+            <input type="file" id="selfie-file-input" accept="image/*" capture="user" hidden />
+          </label>
+          <select id="selfie-day-select" aria-label="Select Album Day"></select>
+          <button id="generate-collage-btn" class="btn-outline">🖼️ Create Keepsake Card</button>
+        </div>
+      </div>
+
+      <div id="collage-preview-area" class="collage-box hidden">
+        <canvas id="keepsake-canvas" width="900" height="520"></canvas>
+        <div class="collage-btns">
+          <a id="download-collage-link" download="Ayyappa-Deeksha-Smruti.png" class="btn-primary">⬇️ Download Keepsake</a>
+          <button id="close-collage-btn" class="btn-ghost-sm">Close</button>
+        </div>
+      </div>
+
+      <div id="selfie-album-grid" class="selfie-grid"></div>
+    </section>
+
+    <!-- TAB 7: YATRA ROUTE & BHAJANS -->
+    <section id="tab-yatra" class="tab-panel">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card-box">
+          <h2 id="ui-yatra-title">⛰️ Sacred Sabarimala Yatra Stops</h2>
+          <div id="yatra-stops-list" class="yatra-timeline"></div>
+        </div>
+        <div class="card-box">
+          <h2 id="ui-bhajan-title">🎶 Sacred Stotrams & Harivarasanam</h2>
+          <div id="bhajans-list" class="bhajans-accordion"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-amber-500/20 bg-temple-900/90 py-6 px-4 text-center text-xs sm:text-sm text-temple-gold">
+    <p>🙏 Swamiye Saranam Ayyappa • Harihara Suthane Saranam Ayyappa • Sabarigiri Vasane Saranam Ayyappa 🙏</p>
+    <div class="mt-2">
+      <button id="admin-login-trigger" type="button" class="text-[11px] text-amber-200/40 hover:text-temple-gold transition cursor-pointer">
+        🔐 Peetam Admin
+      </button>
+    </div>
+  </footer>
+
+  <!-- Modular Data & Feature Scripts -->
+  <script src="data/ui-strings.js"></script>
+  <script src="data/guru-qa.js"></script>
+  <script src="data/visual-cards.js"></script>
+  <script src="data/stories.js"></script>
+  <script src="data/irumudi.js"></script>
+  <script src="data/bhajans.js"></script>
+  <script src="data/yatra-route.js"></script>
+  <script src="modules/saranam-japa.js"></script>
+  <script src="modules/selfie-album.js"></script>
+  <script src="data/custom-content.js"></script>
+  <script src="modules/admin-panel.js"></script>
+  <script src="modules/story-narrator.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
