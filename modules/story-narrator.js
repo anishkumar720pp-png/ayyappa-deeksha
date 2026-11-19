@@ -7,7 +7,7 @@ window.StoryNarratorModule = (function () {
   let queue = [];
   let queueIdx = 0;
   let keepAliveTimer = null;
-  let sharedAudio = null; // Single unlocked HTML5 Audio element for mobile
+  let sharedAudio = null;
 
   const LANG_MAP = { en: "en", te: "te", hi: "hi" };
 
@@ -36,9 +36,9 @@ window.StoryNarratorModule = (function () {
     if (matching.length === 0) {
       const label =
         langPrefix === "te"
-          ? "🎙️ Mobile / Cloud Telugu (Auto)"
+          ? "🎙️ Cloud Telugu Voice (Auto)"
           : langPrefix === "hi"
-          ? "🎙️ Mobile / Cloud Hindi (Auto)"
+          ? "🎙️ Cloud Hindi Voice (Auto)"
           : "🎙️ Default Voice";
       sel.innerHTML = `<option value="">${label}</option>`;
       return;
@@ -86,8 +86,9 @@ window.StoryNarratorModule = (function () {
     clearKeepAlive();
     if (synth) synth.cancel();
     if (sharedAudio) {
+      sharedAudio.onended = null;
+      sharedAudio.onerror = null;
       sharedAudio.pause();
-      sharedAudio.removeAttribute("src");
     }
     isSpeaking = false;
     isPaused = false;
@@ -125,7 +126,11 @@ window.StoryNarratorModule = (function () {
     }
     if (isPaused) return;
 
-    if (!sharedAudio) sharedAudio = new Audio();
+    if (!sharedAudio) {
+      sharedAudio = new Audio();
+      sharedAudio.referrerPolicy = "no-referrer";
+    }
+
     const textChunk = encodeURIComponent(queue[queueIdx]);
     sharedAudio.src = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langPrefix}&client=tw-ob&q=${textChunk}`;
     const rateSel = document.getElementById("narrator-rate-select");
@@ -136,7 +141,11 @@ window.StoryNarratorModule = (function () {
       speakViaCloudAudio(langPrefix);
     };
     sharedAudio.onerror = () => stop();
-    sharedAudio.play().catch(() => stop());
+
+    const playPromise = sharedAudio.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => stop());
+    }
   }
 
   function speakNextChunk() {
@@ -151,7 +160,7 @@ window.StoryNarratorModule = (function () {
     }
     const matching = getMatchingVoices(langPrefix);
 
-    // If no local voice matches Telugu/Hindi, use the unlocked HTML5 cloud audio stream
+    // Use Cloud TTS stream when no local voice exists (fixes Telugu/Hindi on mobile & Chrome)
     if (matching.length === 0 && langPrefix !== "en") {
       speakViaCloudAudio(langPrefix);
       return;
@@ -169,41 +178,24 @@ window.StoryNarratorModule = (function () {
     const rateSel = document.getElementById("narrator-rate-select");
     utter.rate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
 
-    let started = false;
-    utter.onstart = () => { started = true; };
     utter.onend = () => {
       queueIdx += 1;
       setTimeout(speakNextChunk, 40);
     };
-    utter.onerror = () => {
-      if (!started && langPrefix !== "en") {
-        speakViaCloudAudio(langPrefix);
-      } else {
-        stop();
+    utter.onerror = (e) => {
+      if (e.error !== "interrupted") {
+        if (langPrefix !== "en") speakViaCloudAudio(langPrefix);
+        else stop();
       }
     };
 
     synth.speak(utter);
-
-    // If mobile speechSynthesis fails to start within 1.2s, auto-switch to cloud audio
-    if (langPrefix !== "en") {
-      setTimeout(() => {
-        if (isSpeaking && !started && !isPaused) {
-          if (synth) synth.cancel();
-          speakViaCloudAudio(langPrefix);
-        }
-      }, 1200);
-    }
   }
 
   function speakText(fullText, source) {
     stop();
     queue = buildSentenceChunks(fullText);
     if (queue.length === 0) return;
-
-    // Unlock sharedAudio synchronously inside the user's tap gesture for iOS/Android
-    if (!sharedAudio) sharedAudio = new Audio();
-    sharedAudio.play().catch(() => {});
 
     isSpeaking = true;
     isPaused = false;
