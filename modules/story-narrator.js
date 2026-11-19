@@ -7,7 +7,7 @@ window.StoryNarratorModule = (function () {
   let queue = [];
   let queueIdx = 0;
   let keepAliveTimer = null;
-  let fallbackAudio = null;
+  let sharedAudio = null; // Single unlocked HTML5 Audio element for mobile
 
   const LANG_MAP = { en: "en", te: "te", hi: "hi" };
 
@@ -36,9 +36,9 @@ window.StoryNarratorModule = (function () {
     if (matching.length === 0) {
       const label =
         langPrefix === "te"
-          ? "🎙️ Cloud Telugu Voice (Auto)"
+          ? "🎙️ Mobile / Cloud Telugu (Auto)"
           : langPrefix === "hi"
-          ? "🎙️ Cloud Hindi Voice (Auto)"
+          ? "🎙️ Mobile / Cloud Hindi (Auto)"
           : "🎙️ Default Voice";
       sel.innerHTML = `<option value="">${label}</option>`;
       return;
@@ -85,10 +85,9 @@ window.StoryNarratorModule = (function () {
   function stop() {
     clearKeepAlive();
     if (synth) synth.cancel();
-    if (fallbackAudio) {
-      fallbackAudio.pause();
-      fallbackAudio.src = "";
-      fallbackAudio = null;
+    if (sharedAudio) {
+      sharedAudio.pause();
+      sharedAudio.removeAttribute("src");
     }
     isSpeaking = false;
     isPaused = false;
@@ -119,7 +118,6 @@ window.StoryNarratorModule = (function () {
     return chunks;
   }
 
-  // Fallback natural Indian audio stream when browser lacks local Telugu/Hindi TTS
   function speakViaCloudAudio(langPrefix) {
     if (!isSpeaking || queueIdx >= queue.length) {
       stop();
@@ -127,18 +125,18 @@ window.StoryNarratorModule = (function () {
     }
     if (isPaused) return;
 
+    if (!sharedAudio) sharedAudio = new Audio();
     const textChunk = encodeURIComponent(queue[queueIdx]);
-    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langPrefix}&client=tw-ob&q=${textChunk}`;
-    fallbackAudio = new Audio(url);
+    sharedAudio.src = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langPrefix}&client=tw-ob&q=${textChunk}`;
     const rateSel = document.getElementById("narrator-rate-select");
-    fallbackAudio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
+    sharedAudio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
 
-    fallbackAudio.onended = () => {
+    sharedAudio.onended = () => {
       queueIdx += 1;
       speakViaCloudAudio(langPrefix);
     };
-    fallbackAudio.onerror = () => stop();
-    fallbackAudio.play().catch(() => stop());
+    sharedAudio.onerror = () => stop();
+    sharedAudio.play().catch(() => stop());
   }
 
   function speakNextChunk() {
@@ -148,9 +146,12 @@ window.StoryNarratorModule = (function () {
     }
 
     const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    if (synth && allVoices.length === 0) {
+      allVoices = synth.getVoices() || [];
+    }
     const matching = getMatchingVoices(langPrefix);
 
-    // If browser has NO local voice for Telugu/Hindi, immediately use natural cloud audio stream
+    // If no local voice matches Telugu/Hindi, use the unlocked HTML5 cloud audio stream
     if (matching.length === 0 && langPrefix !== "en") {
       speakViaCloudAudio(langPrefix);
       return;
@@ -168,21 +169,41 @@ window.StoryNarratorModule = (function () {
     const rateSel = document.getElementById("narrator-rate-select");
     utter.rate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
 
+    let started = false;
+    utter.onstart = () => { started = true; };
     utter.onend = () => {
       queueIdx += 1;
       setTimeout(speakNextChunk, 40);
     };
-    utter.onerror = (e) => {
-      if (e.error !== "interrupted") stop();
+    utter.onerror = () => {
+      if (!started && langPrefix !== "en") {
+        speakViaCloudAudio(langPrefix);
+      } else {
+        stop();
+      }
     };
 
     synth.speak(utter);
+
+    // If mobile speechSynthesis fails to start within 1.2s, auto-switch to cloud audio
+    if (langPrefix !== "en") {
+      setTimeout(() => {
+        if (isSpeaking && !started && !isPaused) {
+          if (synth) synth.cancel();
+          speakViaCloudAudio(langPrefix);
+        }
+      }, 1200);
+    }
   }
 
   function speakText(fullText, source) {
     stop();
     queue = buildSentenceChunks(fullText);
     if (queue.length === 0) return;
+
+    // Unlock sharedAudio synchronously inside the user's tap gesture for iOS/Android
+    if (!sharedAudio) sharedAudio = new Audio();
+    sharedAudio.play().catch(() => {});
 
     isSpeaking = true;
     isPaused = false;
@@ -196,12 +217,12 @@ window.StoryNarratorModule = (function () {
       }
     }, 10000);
 
-    setTimeout(speakNextChunk, 60);
+    speakNextChunk();
   }
 
   function toggleStoryNarration() {
     if (isSpeaking && activeSource === "story" && !isPaused) {
-      if (fallbackAudio) fallbackAudio.pause();
+      if (sharedAudio && !sharedAudio.paused) sharedAudio.pause();
       else if (synth) synth.pause();
       isPaused = true;
       updateButtons();
@@ -210,7 +231,7 @@ window.StoryNarratorModule = (function () {
     if (isSpeaking && activeSource === "story" && isPaused) {
       isPaused = false;
       updateButtons();
-      if (fallbackAudio) fallbackAudio.play();
+      if (sharedAudio && sharedAudio.src) sharedAudio.play();
       else if (synth) synth.resume();
       return;
     }
