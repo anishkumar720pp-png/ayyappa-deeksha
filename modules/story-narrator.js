@@ -7,9 +7,9 @@ window.StoryNarratorModule = (function () {
   let queue = [];
   let queueIdx = 0;
   let keepAliveTimer = null;
-  let sharedAudio = null;
 
   const LANG_MAP = { en: "en", te: "te", hi: "hi" };
+  const BCP47_MAP = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
 
   function loadVoices() {
     if (!synth) return;
@@ -36,10 +36,10 @@ window.StoryNarratorModule = (function () {
     if (matching.length === 0) {
       const label =
         langPrefix === "te"
-          ? "🎙️ Cloud Telugu Voice (Auto)"
+          ? "🎙️ System Telugu (te-IN)"
           : langPrefix === "hi"
-          ? "🎙️ Cloud Hindi Voice (Auto)"
-          : "🎙️ Default Voice";
+          ? "🎙️ System Hindi (hi-IN)"
+          : "🎙️ System English (en-IN)";
       sel.innerHTML = `<option value="">${label}</option>`;
       return;
     }
@@ -85,11 +85,6 @@ window.StoryNarratorModule = (function () {
   function stop() {
     clearKeepAlive();
     if (synth) synth.cancel();
-    if (sharedAudio) {
-      sharedAudio.onended = null;
-      sharedAudio.onerror = null;
-      sharedAudio.pause();
-    }
     isSpeaking = false;
     isPaused = false;
     activeSource = null;
@@ -119,35 +114,6 @@ window.StoryNarratorModule = (function () {
     return chunks;
   }
 
-  function speakViaCloudAudio(langPrefix) {
-    if (!isSpeaking || queueIdx >= queue.length) {
-      stop();
-      return;
-    }
-    if (isPaused) return;
-
-    if (!sharedAudio) {
-      sharedAudio = new Audio();
-      sharedAudio.referrerPolicy = "no-referrer";
-    }
-
-    const textChunk = encodeURIComponent(queue[queueIdx]);
-    sharedAudio.src = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langPrefix}&client=tw-ob&q=${textChunk}`;
-    const rateSel = document.getElementById("narrator-rate-select");
-    sharedAudio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
-
-    sharedAudio.onended = () => {
-      queueIdx += 1;
-      speakViaCloudAudio(langPrefix);
-    };
-    sharedAudio.onerror = () => stop();
-
-    const playPromise = sharedAudio.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => stop());
-    }
-  }
-
   function speakNextChunk() {
     if (!isSpeaking || queueIdx >= queue.length) {
       stop();
@@ -160,14 +126,9 @@ window.StoryNarratorModule = (function () {
     }
     const matching = getMatchingVoices(langPrefix);
 
-    // Use Cloud TTS stream when no local voice exists (fixes Telugu/Hindi on mobile & Chrome)
-    if (matching.length === 0 && langPrefix !== "en") {
-      speakViaCloudAudio(langPrefix);
-      return;
-    }
-
     const utter = new SpeechSynthesisUtterance(queue[queueIdx]);
-    utter.lang = langPrefix === "te" ? "te-IN" : langPrefix === "hi" ? "hi-IN" : "en-IN";
+    // Explicitly set BCP-47 tag so Android/iOS TTS speaks native Telugu/Hindi even when getVoices() is empty
+    utter.lang = BCP47_MAP[langPrefix] || "en-IN";
 
     const sel = document.getElementById("narrator-voice-select");
     if (matching.length > 0) {
@@ -183,16 +144,18 @@ window.StoryNarratorModule = (function () {
       setTimeout(speakNextChunk, 40);
     };
     utter.onerror = (e) => {
-      if (e.error !== "interrupted") {
-        if (langPrefix !== "en") speakViaCloudAudio(langPrefix);
-        else stop();
-      }
+      if (e.error !== "interrupted") stop();
     };
 
     synth.speak(utter);
   }
 
   function speakText(fullText, source) {
+    if (!synth) {
+      alert("Speech narration is not supported in this browser.");
+      return;
+    }
+
     stop();
     queue = buildSentenceChunks(fullText);
     if (queue.length === 0) return;
@@ -213,18 +176,17 @@ window.StoryNarratorModule = (function () {
   }
 
   function toggleStoryNarration() {
+    if (!synth) return;
     if (isSpeaking && activeSource === "story" && !isPaused) {
-      if (sharedAudio && !sharedAudio.paused) sharedAudio.pause();
-      else if (synth) synth.pause();
+      synth.pause();
       isPaused = true;
       updateButtons();
       return;
     }
     if (isSpeaking && activeSource === "story" && isPaused) {
+      synth.resume();
       isPaused = false;
       updateButtons();
-      if (sharedAudio && sharedAudio.src) sharedAudio.play();
-      else if (synth) synth.resume();
       return;
     }
     const title = document.getElementById("story-title")?.textContent || "";
