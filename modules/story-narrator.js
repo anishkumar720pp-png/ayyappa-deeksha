@@ -1,13 +1,5 @@
 window.StoryNarratorModule = (function () {
   const synth = window.speechSynthesis;
-  const VOICE_READY_KEY = "ayyappa_offline_voices_ready_v2";
-
-  const PIPER_VOICE_IDS = {
-    te: "te_IN-maya-medium",
-    hi: "hi_IN-pratham-medium",
-    en: "en_US-lessac-medium"
-  };
-
   let allVoices = [];
   let isSpeaking = false;
   let isPaused = false;
@@ -19,48 +11,6 @@ window.StoryNarratorModule = (function () {
 
   const LANG_MAP = { en: "en", te: "te", hi: "hi" };
   const BCP47_MAP = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
-
-  function isFileProtocol() {
-    return window.location.protocol === "file:";
-  }
-
-  async function downloadOfflineVoicePack(onProgress) {
-    if (isFileProtocol() || !window.PiperTTS) {
-      if (onProgress) {
-        onProgress(100, "⚠️ Open your live GitHub Pages link (https://...) to download Offline Neural Voices.");
-      }
-      return;
-    }
-    try {
-      const langs = [
-        { code: "te", label: "Telugu (తెలుగు - Maya)" },
-        { code: "hi", label: "Hindi (हिन्दी - Pratham)" },
-        { code: "en", label: "English (Lessac)" }
-      ];
-      for (let i = 0; i < langs.length; i++) {
-        const item = langs[i];
-        const voiceId = PIPER_VOICE_IDS[item.code];
-        const basePct = Math.round((i / langs.length) * 100);
-        if (onProgress) onProgress(basePct + 5, `Downloading ${item.label}...`);
-
-        await window.PiperTTS.download(voiceId, (progress) => {
-          if (progress && progress.total && onProgress) {
-            const sub = Math.round((progress.loaded / progress.total) * (100 / langs.length));
-            onProgress(
-              Math.min(99, basePct + sub),
-              `Downloading ${item.label}: ${Math.round((progress.loaded / progress.total) * 100)}%`
-            );
-          }
-        });
-      }
-      localStorage.setItem(VOICE_READY_KEY, "true");
-      if (onProgress) onProgress(100, "✅ All 3 Neural Voices (Telugu • Hindi • English) Ready!");
-      populateVoiceDropdown();
-    } catch (err) {
-      console.error("Neural voice download error:", err);
-      if (onProgress) onProgress(100, "⚠️ Download interrupted—check internet and try again.");
-    }
-  }
 
   function loadVoices() {
     if (!synth) return;
@@ -84,32 +34,25 @@ window.StoryNarratorModule = (function () {
     const langPrefix = LANG_MAP[getActiveLang()] || "en";
     const matching = getMatchingVoices(langPrefix);
 
-    let optionsHtml = "";
-    if (!isFileProtocol()) {
-      optionsHtml += `<option value="__neural__">🕉️ Peetam Neural Voice (${langPrefix.toUpperCase()})</option>`;
-    }
     if (matching.length > 0) {
-      optionsHtml += matching.map((v) => {
+      const savedVoice = localStorage.getItem("ayyappa_voice_" + langPrefix) || "";
+      sel.innerHTML = matching.map((v) => {
+        const selected = v.name === savedVoice ? "selected" : "";
         const cleanName = v.name.replace(/Microsoft |Google |Android |Online \(Natural\) - /g, "");
-        return `<option value="${v.name}">🎙️ ${cleanName}</option>`;
+        return `<option value="${v.name}" ${selected}>🎙️ ${cleanName}</option>`;
       }).join("");
-    } else if (!optionsHtml) {
-      optionsHtml += `<option value="">🎙️ System (${BCP47_MAP[langPrefix]})</option>`;
+    } else {
+      sel.innerHTML = `<option value="">🎙️ Peetam Voice (${BCP47_MAP[langPrefix]})</option>`;
     }
-    sel.innerHTML = optionsHtml;
   }
 
-  function updateButtons(loadingText) {
+  function updateButtons() {
     const playBtn = document.getElementById("narrator-play-btn");
     const stopBtn = document.getElementById("narrator-stop-btn");
-    const guruListenBtn = document.getElementById("listen-answer-btn");
     const guruStopBtn = document.getElementById("stop-answer-btn");
 
     if (playBtn && stopBtn) {
-      if (loadingText && activeSource === "story") {
-        playBtn.textContent = loadingText;
-        stopBtn.classList.remove("hidden");
-      } else if (isSpeaking && activeSource === "story" && !isPaused) {
+      if (isSpeaking && activeSource === "story" && !isPaused) {
         playBtn.textContent = "⏸️ Pause";
         stopBtn.classList.remove("hidden");
       } else if (isSpeaking && activeSource === "story" && isPaused) {
@@ -121,9 +64,6 @@ window.StoryNarratorModule = (function () {
       }
     }
 
-    if (guruListenBtn) {
-      guruListenBtn.textContent = loadingText && activeSource === "guru" ? loadingText : "🔊 Listen";
-    }
     if (guruStopBtn) {
       guruStopBtn.classList.toggle("hidden", !(isSpeaking && activeSource === "guru"));
     }
@@ -153,7 +93,6 @@ window.StoryNarratorModule = (function () {
     updateButtons();
   }
 
-  // Prevents Telugu/Hindi TTS engines from stalling on ASCII digits like "41" or "18"
   function normalizeTextForLang(text, langPrefix) {
     let t = text
       .replace(/[•▪◆►'‘’"“”()]/g, " ")
@@ -191,59 +130,22 @@ window.StoryNarratorModule = (function () {
     return chunks;
   }
 
-  async function speakWithNeuralEngine(langPrefix) {
+  function speakNextChunk() {
     if (!isSpeaking || queueIdx >= queue.length) {
       stop();
       return;
     }
-    if (isPaused) return;
 
-    const voiceId = PIPER_VOICE_IDS[langPrefix] || PIPER_VOICE_IDS.en;
-    try {
-      if (queueIdx === 0) updateButtons("⏳ Loading Voice...");
-      const wavBlob = await window.PiperTTS.predict({
-        text: queue[queueIdx],
-        voiceId: voiceId
-      });
-      if (!isSpeaking) return;
-      updateButtons();
-
-      const audioUrl = URL.createObjectURL(wavBlob);
-      activeAudio = new Audio(audioUrl);
-      const rateSel = document.getElementById("narrator-rate-select");
-      activeAudio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
-
-      activeAudio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
-        queueIdx += 1;
-        speakWithNeuralEngine(langPrefix);
-      };
-      activeAudio.onerror = () => {
-        URL.revokeObjectURL(audioUrl);
-        queueIdx += 1;
-        speakWithNeuralEngine(langPrefix);
-      };
-      await activeAudio.play();
-    } catch (err) {
-      console.warn("Neural TTS chunk fallback:", err);
-      updateButtons();
-      speakWithDeviceTTS(langPrefix);
-    }
-  }
-
-  function speakWithDeviceTTS(langPrefix) {
-    if (!synth || !isSpeaking || queueIdx >= queue.length) {
-      stop();
-      return;
-    }
-    updateButtons();
+    const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    if (synth && allVoices.length === 0) allVoices = synth.getVoices() || [];
     const matching = getMatchingVoices(langPrefix);
+
     const utter = new SpeechSynthesisUtterance(queue[queueIdx]);
     utter.lang = BCP47_MAP[langPrefix] || "en-IN";
 
     const sel = document.getElementById("narrator-voice-select");
-    if (matching.length > 0 && sel && sel.value !== "__neural__") {
-      const chosen = matching.find((v) => v.name === sel.value) || matching[0];
+    if (matching.length > 0) {
+      const chosen = matching.find((v) => v.name === (sel && sel.value)) || matching[0];
       if (chosen) utter.voice = chosen;
     }
 
@@ -252,47 +154,54 @@ window.StoryNarratorModule = (function () {
 
     utter.onend = () => {
       queueIdx += 1;
-      setTimeout(() => speakWithDeviceTTS(langPrefix), 50);
+      setTimeout(speakNextChunk, 50);
     };
     utter.onerror = (e) => {
       if (e.error === "interrupted" || e.error === "canceled") return;
-      // Skip problematic chunk instead of aborting the whole reading
       queueIdx += 1;
-      setTimeout(() => speakWithDeviceTTS(langPrefix), 50);
+      setTimeout(speakNextChunk, 50);
     };
+
     synth.speak(utter);
   }
 
-  function speakNextChunk() {
-    const langPrefix = LANG_MAP[getActiveLang()] || "en";
-    const sel = document.getElementById("narrator-voice-select");
-    const useNeural = !isFileProtocol() && window.PiperTTS && (!sel || sel.value === "__neural__");
-
-    if (useNeural) {
-      speakWithNeuralEngine(langPrefix);
-    } else {
-      speakWithDeviceTTS(langPrefix);
-    }
-  }
-
-  function speakText(fullText, source) {
+  // Checks if a pre-recorded MP3 exists in audio/<lang>/<slug>.mp3 before falling back to TTS
+  function tryPlayBundledMp3(mp3Path, fallbackText, source) {
     stop();
-    const langPrefix = LANG_MAP[getActiveLang()] || "en";
-    queue = buildSentenceChunks(fullText, langPrefix);
-    if (queue.length === 0) return;
-
     isSpeaking = true;
     isPaused = false;
     activeSource = source;
-    queueIdx = 0;
     updateButtons();
 
-    keepAliveTimer = setInterval(() => {
-      if (synth && synth.speaking && !synth.paused) {
-        synth.resume();
-      }
-    }, 10000);
+    const audio = new Audio(mp3Path);
+    const rateSel = document.getElementById("narrator-rate-select");
+    audio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
 
+    audio.oncanplaythrough = () => {
+      if (!isSpeaking) return;
+      activeAudio = audio;
+      audio.play().catch(() => startTtsFallback(fallbackText, source));
+    };
+    audio.onended = () => stop();
+    audio.onerror = () => startTtsFallback(fallbackText, source);
+    audio.load();
+  }
+
+  function startTtsFallback(fullText, source) {
+    if (!synth) {
+      stop();
+      return;
+    }
+    const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    queue = buildSentenceChunks(fullText, langPrefix);
+    if (queue.length === 0) {
+      stop();
+      return;
+    }
+    queueIdx = 0;
+    keepAliveTimer = setInterval(() => {
+      if (synth && synth.speaking && !synth.paused) synth.resume();
+    }, 10000);
     speakNextChunk();
   }
 
@@ -311,15 +220,25 @@ window.StoryNarratorModule = (function () {
       else if (synth) synth.resume();
       return;
     }
+    const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    const dayBadge = document.getElementById("story-day-badge")?.textContent || "";
+    const dayNum = (dayBadge.match(/\d+/) || ["1"])[0];
     const title = document.getElementById("story-title")?.textContent || "";
     const body = document.getElementById("story-content")?.textContent || "";
-    speakText(`${title}. ${body}`, "story");
+
+    // Looks for audio/te/day-1.mp3, audio/hi/day-1.mp3, audio/en/day-1.mp3 first!
+    tryPlayBundledMp3(`audio/${langPrefix}/day-${dayNum}.mp3`, `${title}. ${body}`, "story");
   }
 
   function speakGuruAnswer() {
     const q = document.getElementById("guru-answer-q")?.textContent || "";
     const a = document.getElementById("guru-answer-a")?.textContent || "";
-    speakText(`${q}. ${a}`, "guru");
+    stop();
+    isSpeaking = true;
+    isPaused = false;
+    activeSource = "guru";
+    updateButtons();
+    startTtsFallback(`${q}. ${a}`, "guru");
   }
 
   function init() {
@@ -350,5 +269,5 @@ window.StoryNarratorModule = (function () {
     }
   }
 
-  return { init, stop, populateVoiceDropdown, downloadOfflineVoicePack };
+  return { init, stop, populateVoiceDropdown };
 })();
