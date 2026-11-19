@@ -17,6 +17,7 @@ window.AdminPanelModule = (function () {
       const parsed = JSON.parse(localStorage.getItem(CUSTOM_DATA_KEY) || "null") || {};
       return {
         guruAvatar: parsed.guruAvatar || null,
+        darshanImage: parsed.darshanImage || null, // <-- ADD THIS LINE
         cardOverrides: parsed.cardOverrides || {},
         deletedCardIds: parsed.deletedCardIds || [],
         extraVisualCards: parsed.extraVisualCards || [],
@@ -185,6 +186,10 @@ window.AdminPanelModule = (function () {
                   <input type="file" id="admin-guru-img-input" accept="image/*" class="text-xs" />
                   <button type="button" id="admin-reset-guru-img" class="btn-ghost-sm">Reset Default Illustration</button>
                 </div>
+                <div class="bg-temple-800 p-4 rounded-xl border border-amber-500/20 space-y-2">
+  <h3 class="font-bold text-temple-gold text-sm">1B. Change Darshan Entrance Image (Lord Ayyappa on 18 Steps)</h3>
+  <input type="file" id="admin-darshan-img-input" accept="image/*" class="text-xs" />
+</div>
               </div>
 
               <form id="admin-add-card-form" class="bg-temple-800 p-4 rounded-xl border border-amber-500/20 space-y-2.5">
@@ -291,6 +296,20 @@ window.AdminPanelModule = (function () {
     if (window.VISUAL_CARDS_DATA && !window.BASE_VISUAL_CARDS) {
       window.BASE_VISUAL_CARDS = [...window.VISUAL_CARDS_DATA];
     }
+
+    document.addEventListener("change", async (e) => {
+      if (e.target && e.target.id === "admin-darshan-img-input") {
+        const file = e.target.files[0];
+        if (!file) return;
+        const dataUrl = await resizeImageFile(file, 480);
+        const data = getCustomData();
+        data.darshanImage = dataUrl;
+        saveCustomData(data);
+        alert("Swamiye Saranam Ayyappa! Darshan Entrance image updated.");
+      }
+    });
+
+
 
     if (window.HOSTED_CUSTOM_CONTENT) {
       const existing = getCustomData();

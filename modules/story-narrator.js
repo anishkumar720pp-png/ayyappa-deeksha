@@ -1,5 +1,13 @@
 window.StoryNarratorModule = (function () {
   const synth = window.speechSynthesis;
+  const VOICE_READY_KEY = "ayyappa_offline_voices_ready_v2";
+
+  const PIPER_VOICE_IDS = {
+    te: "te_IN-maya-medium",
+    hi: "hi_IN-pratham-medium",
+    en: "en_US-lessac-medium"
+  };
+
   let allVoices = [];
   let isSpeaking = false;
   let isPaused = false;
@@ -7,9 +15,52 @@ window.StoryNarratorModule = (function () {
   let queue = [];
   let queueIdx = 0;
   let keepAliveTimer = null;
+  let activeAudio = null;
 
   const LANG_MAP = { en: "en", te: "te", hi: "hi" };
   const BCP47_MAP = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
+
+  function isFileProtocol() {
+    return window.location.protocol === "file:";
+  }
+
+  async function downloadOfflineVoicePack(onProgress) {
+    if (isFileProtocol() || !window.PiperTTS) {
+      if (onProgress) {
+        onProgress(100, "⚠️ Open your live GitHub Pages link (https://...) to download Offline Neural Voices.");
+      }
+      return;
+    }
+    try {
+      const langs = [
+        { code: "te", label: "Telugu (తెలుగు - Maya)" },
+        { code: "hi", label: "Hindi (हिन्दी - Pratham)" },
+        { code: "en", label: "English (Lessac)" }
+      ];
+      for (let i = 0; i < langs.length; i++) {
+        const item = langs[i];
+        const voiceId = PIPER_VOICE_IDS[item.code];
+        const basePct = Math.round((i / langs.length) * 100);
+        if (onProgress) onProgress(basePct + 5, `Downloading ${item.label}...`);
+
+        await window.PiperTTS.download(voiceId, (progress) => {
+          if (progress && progress.total && onProgress) {
+            const sub = Math.round((progress.loaded / progress.total) * (100 / langs.length));
+            onProgress(
+              Math.min(99, basePct + sub),
+              `Downloading ${item.label}: ${Math.round((progress.loaded / progress.total) * 100)}%`
+            );
+          }
+        });
+      }
+      localStorage.setItem(VOICE_READY_KEY, "true");
+      if (onProgress) onProgress(100, "✅ All 3 Neural Voices (Telugu • Hindi • English) Ready!");
+      populateVoiceDropdown();
+    } catch (err) {
+      console.error("Neural voice download error:", err);
+      if (onProgress) onProgress(100, "⚠️ Download interrupted—check internet and try again.");
+    }
+  }
 
   function loadVoices() {
     if (!synth) return;
@@ -33,32 +84,32 @@ window.StoryNarratorModule = (function () {
     const langPrefix = LANG_MAP[getActiveLang()] || "en";
     const matching = getMatchingVoices(langPrefix);
 
-    if (matching.length === 0) {
-      const label =
-        langPrefix === "te"
-          ? "🎙️ System Telugu (te-IN)"
-          : langPrefix === "hi"
-          ? "🎙️ System Hindi (hi-IN)"
-          : "🎙️ System English (en-IN)";
-      sel.innerHTML = `<option value="">${label}</option>`;
-      return;
+    let optionsHtml = "";
+    if (!isFileProtocol()) {
+      optionsHtml += `<option value="__neural__">🕉️ Peetam Neural Voice (${langPrefix.toUpperCase()})</option>`;
     }
-
-    const savedVoice = localStorage.getItem("ayyappa_voice_" + langPrefix) || "";
-    sel.innerHTML = matching.map((v) => {
-      const selected = v.name === savedVoice ? "selected" : "";
-      const cleanName = v.name.replace(/Microsoft |Google |Android |Online \(Natural\) - /g, "");
-      return `<option value="${v.name}" ${selected}>🎙️ ${cleanName}</option>`;
-    }).join("");
+    if (matching.length > 0) {
+      optionsHtml += matching.map((v) => {
+        const cleanName = v.name.replace(/Microsoft |Google |Android |Online \(Natural\) - /g, "");
+        return `<option value="${v.name}">🎙️ ${cleanName}</option>`;
+      }).join("");
+    } else if (!optionsHtml) {
+      optionsHtml += `<option value="">🎙️ System (${BCP47_MAP[langPrefix]})</option>`;
+    }
+    sel.innerHTML = optionsHtml;
   }
 
-  function updateButtons() {
+  function updateButtons(loadingText) {
     const playBtn = document.getElementById("narrator-play-btn");
     const stopBtn = document.getElementById("narrator-stop-btn");
+    const guruListenBtn = document.getElementById("listen-answer-btn");
     const guruStopBtn = document.getElementById("stop-answer-btn");
 
     if (playBtn && stopBtn) {
-      if (isSpeaking && activeSource === "story" && !isPaused) {
+      if (loadingText && activeSource === "story") {
+        playBtn.textContent = loadingText;
+        stopBtn.classList.remove("hidden");
+      } else if (isSpeaking && activeSource === "story" && !isPaused) {
         playBtn.textContent = "⏸️ Pause";
         stopBtn.classList.remove("hidden");
       } else if (isSpeaking && activeSource === "story" && isPaused) {
@@ -70,6 +121,9 @@ window.StoryNarratorModule = (function () {
       }
     }
 
+    if (guruListenBtn) {
+      guruListenBtn.textContent = loadingText && activeSource === "guru" ? loadingText : "🔊 Listen";
+    }
     if (guruStopBtn) {
       guruStopBtn.classList.toggle("hidden", !(isSpeaking && activeSource === "guru"));
     }
@@ -85,6 +139,12 @@ window.StoryNarratorModule = (function () {
   function stop() {
     clearKeepAlive();
     if (synth) synth.cancel();
+    if (activeAudio) {
+      activeAudio.onended = null;
+      activeAudio.onerror = null;
+      activeAudio.pause();
+      activeAudio = null;
+    }
     isSpeaking = false;
     isPaused = false;
     activeSource = null;
@@ -93,46 +153,97 @@ window.StoryNarratorModule = (function () {
     updateButtons();
   }
 
-  function buildSentenceChunks(rawText) {
-    const cleaned = rawText
-      .replace(/[•▪◆►]/g, ". ")
+  // Prevents Telugu/Hindi TTS engines from stalling on ASCII digits like "41" or "18"
+  function normalizeTextForLang(text, langPrefix) {
+    let t = text
+      .replace(/[•▪◆►'‘’"“”()]/g, " ")
       .replace(/\s+/g, " ")
       .trim();
 
+    if (langPrefix === "te") {
+      t = t
+        .replace(/\b41\b/g, "నలభై ఒకటి")
+        .replace(/\b18\b/g, "పద్దెనిమిది")
+        .replace(/\b108\b/g, "నూట ఎనిమిది");
+    } else if (langPrefix === "hi") {
+      t = t
+        .replace(/\b41\b/g, "इकतालीस")
+        .replace(/\b18\b/g, "अठारह")
+        .replace(/\b108\b/g, "एक सौ आठ");
+    }
+    return t;
+  }
+
+  function buildSentenceChunks(rawText, langPrefix) {
+    const cleaned = normalizeTextForLang(rawText, langPrefix);
     const rawSentences = cleaned.split(/(?<=[.!?।])\s+|\n+/);
     const chunks = [];
     for (const s of rawSentences) {
       const trimmed = s.trim();
       if (!trimmed) continue;
-      if (trimmed.length <= 130) {
+      if (trimmed.length <= 140) {
         chunks.push(trimmed);
       } else {
-        const subParts = trimmed.match(/.{1,120}(?:\s|,|$)/g) || [trimmed];
+        const subParts = trimmed.match(/.{1,130}(?:\s|,|$)/g) || [trimmed];
         subParts.forEach((p) => { if (p.trim()) chunks.push(p.trim()); });
       }
     }
     return chunks;
   }
 
-  function speakNextChunk() {
+  async function speakWithNeuralEngine(langPrefix) {
     if (!isSpeaking || queueIdx >= queue.length) {
       stop();
       return;
     }
+    if (isPaused) return;
 
-    const langPrefix = LANG_MAP[getActiveLang()] || "en";
-    if (synth && allVoices.length === 0) {
-      allVoices = synth.getVoices() || [];
+    const voiceId = PIPER_VOICE_IDS[langPrefix] || PIPER_VOICE_IDS.en;
+    try {
+      if (queueIdx === 0) updateButtons("⏳ Loading Voice...");
+      const wavBlob = await window.PiperTTS.predict({
+        text: queue[queueIdx],
+        voiceId: voiceId
+      });
+      if (!isSpeaking) return;
+      updateButtons();
+
+      const audioUrl = URL.createObjectURL(wavBlob);
+      activeAudio = new Audio(audioUrl);
+      const rateSel = document.getElementById("narrator-rate-select");
+      activeAudio.playbackRate = rateSel ? parseFloat(rateSel.value) || 0.95 : 0.95;
+
+      activeAudio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        queueIdx += 1;
+        speakWithNeuralEngine(langPrefix);
+      };
+      activeAudio.onerror = () => {
+        URL.revokeObjectURL(audioUrl);
+        queueIdx += 1;
+        speakWithNeuralEngine(langPrefix);
+      };
+      await activeAudio.play();
+    } catch (err) {
+      console.warn("Neural TTS chunk fallback:", err);
+      updateButtons();
+      speakWithDeviceTTS(langPrefix);
     }
-    const matching = getMatchingVoices(langPrefix);
+  }
 
+  function speakWithDeviceTTS(langPrefix) {
+    if (!synth || !isSpeaking || queueIdx >= queue.length) {
+      stop();
+      return;
+    }
+    updateButtons();
+    const matching = getMatchingVoices(langPrefix);
     const utter = new SpeechSynthesisUtterance(queue[queueIdx]);
-    // Explicitly set BCP-47 tag so Android/iOS TTS speaks native Telugu/Hindi even when getVoices() is empty
     utter.lang = BCP47_MAP[langPrefix] || "en-IN";
 
     const sel = document.getElementById("narrator-voice-select");
-    if (matching.length > 0) {
-      const chosen = matching.find((v) => v.name === (sel && sel.value)) || matching[0];
+    if (matching.length > 0 && sel && sel.value !== "__neural__") {
+      const chosen = matching.find((v) => v.name === sel.value) || matching[0];
       if (chosen) utter.voice = chosen;
     }
 
@@ -141,23 +252,33 @@ window.StoryNarratorModule = (function () {
 
     utter.onend = () => {
       queueIdx += 1;
-      setTimeout(speakNextChunk, 40);
+      setTimeout(() => speakWithDeviceTTS(langPrefix), 50);
     };
     utter.onerror = (e) => {
-      if (e.error !== "interrupted") stop();
+      if (e.error === "interrupted" || e.error === "canceled") return;
+      // Skip problematic chunk instead of aborting the whole reading
+      queueIdx += 1;
+      setTimeout(() => speakWithDeviceTTS(langPrefix), 50);
     };
-
     synth.speak(utter);
   }
 
-  function speakText(fullText, source) {
-    if (!synth) {
-      alert("Speech narration is not supported in this browser.");
-      return;
-    }
+  function speakNextChunk() {
+    const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    const sel = document.getElementById("narrator-voice-select");
+    const useNeural = !isFileProtocol() && window.PiperTTS && (!sel || sel.value === "__neural__");
 
+    if (useNeural) {
+      speakWithNeuralEngine(langPrefix);
+    } else {
+      speakWithDeviceTTS(langPrefix);
+    }
+  }
+
+  function speakText(fullText, source) {
     stop();
-    queue = buildSentenceChunks(fullText);
+    const langPrefix = LANG_MAP[getActiveLang()] || "en";
+    queue = buildSentenceChunks(fullText, langPrefix);
     if (queue.length === 0) return;
 
     isSpeaking = true;
@@ -176,17 +297,18 @@ window.StoryNarratorModule = (function () {
   }
 
   function toggleStoryNarration() {
-    if (!synth) return;
     if (isSpeaking && activeSource === "story" && !isPaused) {
-      synth.pause();
+      if (activeAudio && !activeAudio.paused) activeAudio.pause();
+      else if (synth) synth.pause();
       isPaused = true;
       updateButtons();
       return;
     }
     if (isSpeaking && activeSource === "story" && isPaused) {
-      synth.resume();
       isPaused = false;
       updateButtons();
+      if (activeAudio) activeAudio.play();
+      else if (synth) synth.resume();
       return;
     }
     const title = document.getElementById("story-title")?.textContent || "";
@@ -228,5 +350,5 @@ window.StoryNarratorModule = (function () {
     }
   }
 
-  return { init, stop, populateVoiceDropdown };
+  return { init, stop, populateVoiceDropdown, downloadOfflineVoicePack };
 })();
