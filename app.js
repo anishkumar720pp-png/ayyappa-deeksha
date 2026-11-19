@@ -549,6 +549,7 @@ ${body}`;
     if (window.SelfieAlbumModule) window.SelfieAlbumModule.init(getLang);
     if (window.AdminPanelModule) window.AdminPanelModule.init(applyTranslations);
     if (window.StoryNarratorModule) window.StoryNarratorModule.init();
+    if (window.DarshanIntroModule) window.DarshanIntroModule.init();
 
     applyTranslations();
 
